@@ -6,7 +6,7 @@ About
 
 Scans all your e-mail headers (From and To only). For classification, it uses simple algorithm:
 
-For each new e-mail in INBOX, if I got an e-mail from the same sender before and I never replied -> classify as "read later"
+For each new e-mail in INBOX, if I got an e-mail from the same sender before and I never replied -> classify as "read later"  
 Otherwise -> keep in inbox
 
 Setup
@@ -14,14 +14,14 @@ Setup
 
 1. Edit at least config/imap.yml. It needs to see your incoming mail folder (archive, backup) and especially your sent folder.
 2. run this:
-
-	> db/development.sqlite.db
-	rake db:migrate
-
-(including the > at the beginning)
+   
+	# > db/development.sqlite.db
+   
+	# rake db:migrate
+   
+   (including the > at the beginning)
 3. run imapfetchheaders.rb to learn, this can take a few hours
-4. run "imapclassify.rb -d" after imapfetchheaders finished (otherwise it will learn and remember bad choices)
-    and it will dump on stdout what it thinks about the e-mails in your inbox
+4. run "imapclassify.rb -d" after imapfetchheaders finished (otherwise it will learn and remember bad choices) and it will dump on stdout what it thinks about the e-mails in your inbox
 5. if you are confident about the results, you can omit the "-d" (dry run), it will move the messages
 6. you can run imapfetchheaders.rb from cron with "-r" parameter (once in an hour) to learn from new sent and
     inbox messages. -r will process everything marked as "NEW" by the client and everything since yesterday.
