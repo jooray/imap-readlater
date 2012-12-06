@@ -40,6 +40,7 @@ TODO: Lots :)
  - List of bulk mailers
  - Learn from moving messages around
  - Implement Black Hole
+ - Implement multiple account support (move imap.yml to configuration.yml, merge database config there, add command line option for choosing current configuration)
 
 Copying
 -------
