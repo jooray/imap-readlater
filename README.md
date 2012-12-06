@@ -9,6 +9,8 @@ Scans all your e-mail headers (From and To only). For classification, it uses si
 For each new e-mail in INBOX, if I got an e-mail from the same sender before and I never replied -> classify as "read later"  
 Otherwise -> keep in inbox
 
+I was inspired by an excellent service called SaneBox. Although I love the service and would even pay for it, I can not give access to my e-mail to a third party for contractual reasons (and it would be difficult to let them reach my inbox anyway), I decided to do a much simpler version myself. I am still fan of SaneBox.
+
 Setup
 -----
 
