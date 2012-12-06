@@ -1,0 +1,10 @@
+default:
+   imapserver: server.example.com
+   imapport: 993
+   ssl: true
+   login: login
+   password: password
+   folders: ['Sent', 'backup']
+   myfromaddr: ['one@example.com', 'two@example.com']
+   laterfolder: '@Later'
+
