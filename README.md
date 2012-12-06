@@ -15,11 +15,8 @@ Setup
 1. Edit at least config/imap.yml. It needs to see your incoming mail folder (archive, backup) and especially your sent folder.
 2. run this:
    
-	# > db/development.sqlite.db
+	touch db/development.sqlite.db ; rake db:migrate
    
-	# rake db:migrate
-   
-   (including the > at the beginning)
 3. run imapfetchheaders.rb to learn, this can take a few hours
 4. run "imapclassify.rb -d" after imapfetchheaders finished (otherwise it will learn and remember bad choices) and it will dump on stdout what it thinks about the e-mails in your inbox
 5. if you are confident about the results, you can omit the "-d" (dry run), it will move the messages
