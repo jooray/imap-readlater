@@ -76,5 +76,5 @@ Copying
 
 Author: Juraj Bednar, see COPYING for license (simplified BSD license)
 
-Pull requests welcome, please contribute!
+Pull requests welcome, please contribute! Bitcoin donations welcome at 1DbZLszSREg9PrUWXuucKGZ7MUcGCLaQjR
 
