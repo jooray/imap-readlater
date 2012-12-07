@@ -225,9 +225,29 @@ def manual_learn_all(move_messages = true)
 end
 
 
+def manual_classify(email, symbol)
+	mailbox, domain = email.split(/@/)
+	c = Classification.find_by_mailbox_and_domain(mailbox, domain)
+	unless c
+		c=Classification.new
+		c.mailbox=mailbox
+		c.domain=domain
+	end
+	c.byuser=true
+	c.movetolater=symbol_to_movetolater(symbol)
+	c.blackhole=symbol_to_blackhole(symbol)
+	c.save
+end
 
 private
 
+def symbol_to_movetolater(symbol)
+	symbol == 'l'
+end
+
+def symbol_to_blackhole(symbol)
+	symbol == 'b'
+end
 def classification_to_symbol(movetolater, blackhole)
 		symbol = 'i'
 		if blackhole
