@@ -4,7 +4,12 @@ imap-readlater
 About
 -----
 
-Scans all your e-mail headers (From and To only). For classification, it uses simple algorithm:
+This filter solves a simple problem: We get tons of e-mail. Some of it should be processed
+almost immediately or more often (new customer, normal communication) and some of it can (and should)
+be processed in batches (newsletters, e-mail notifications, ...). This is not a spam filter. It simply
+splits your incoming e-mail to two groups: INBOX and "read this later". 
+
+It scans all your e-mail headers (From and To only). For classification, it uses simple algorithm:
 
 For each new e-mail in INBOX, if I got an e-mail from the same sender before and I never replied -> classify as "read later"  
 Otherwise -> keep in inbox
@@ -13,12 +18,19 @@ It uses two special folders (it will create them), default names used, can be ch
  - @Later - if the above mentioned simple algorithm thinks it's for later, it will put the mail here
  - @Blackhole - if you put a mail here, you will never get any more mail from the same sender
 
-You can move messages between @Later, @Blackhole and INBOX and it will learn it's new classification and will work
-correctly. So if it put an e-mail you wanted in your INBOX into @Later, just dragging it to INBOX and running
-imapclassify.rb will do the trick. Works the other way around too. If you accidentally put something into @Blackhole,
-correct this problem using manualclassify.rb (run it to see help).
+You can move messages between @Later, @Blackhole and INBOX and it
+will learn it's new classification and will work correctly. So if
+it put an e-mail you wanted in your INBOX into @Later, just dragging
+it to INBOX and running imapclassify.rb will do the trick. Works
+the other way around too. If you accidentally put something into
+@Blackhole, correct this problem using manualclassify.rb (run it
+without arguments to see help).
 
-I was inspired by an excellent service called SaneBox. Although I love the service and would even pay for it, I can not give access to my e-mail to a third party for contractual reasons (and it would be difficult to let them reach my inbox anyway), I decided to do a much simpler version myself. I am still fan of SaneBox.
+I was inspired by an excellent service called SaneBox. Although I
+love the service and would even pay for it, I can not give access
+to my e-mail to a third party for contractual reasons (and it would
+be difficult to let them reach my inbox anyway), I decided to do a
+much simpler version myself. I am still fan of SaneBox.
 
 Setup
 -----
@@ -55,6 +67,9 @@ TODO
 TODO: Lots :)
  - List of bulk mailers
  - Implement multiple account support (move imap.yml to configuration.yml, merge database config there, add command line option for choosing current configuration)
+ - Merge imapfetchheaders and imapclassify to one tool
+ - Implement a daemon (no cron needed), should be optional
+ - Allow to write "ask" in the password field in the daemon and ask for password when starting
 
 Copying
 -------
