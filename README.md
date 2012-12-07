@@ -32,10 +32,16 @@ Setup
 4. run imapfetchheaders.rb to learn, this can take a few hours
 5. run "imapclassify.rb -d" after imapfetchheaders finished (otherwise it will learn and remember bad choices) and it will dump on stdout what it thinks about the e-mails in your inbox
 6. if you are confident about the results, you can omit the "-d" (dry run), it will move the messages
-7. you can run imapfetchheaders.rb from cron with "-r" parameter (once in an hour) to learn from new sent and
+7. you can run imapfetchheaders.rb from cron with "-r" parameter (cca once in an hour) to learn from new sent and
     inbox messages. -r will process everything marked as "NEW" by the client and everything since yesterday.
 
-While I can not guarantee your e-mail safety, I ran it on my production e-mail boxes already.
+I put this to my crontab (make sure that ruby points to the right ruby, you may have different environment)
+
+	*/2 * * * * (cd ~/imap-readlater ; ruby imapclassify.rb) >> ~/.imap-readlater.log 2>&1  
+	03,33 * * * * (cd ~/imap-readlater ; ruby imapclassify.rb && ruby imapfetchheaders.rb -r) >> ~/.imap-readlater.log 2>&1
+
+While I can not guarantee your e-mail safety, I run this on my production mailboxes already. As far as I know it does
+not eat my e-mail. YMMV.
 
 More information
 ----------------
