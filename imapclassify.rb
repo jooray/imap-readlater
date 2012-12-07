@@ -15,4 +15,4 @@ imap_classifier.connect
 imap_classifier.classify_folder('INBOX', "ALL", move_messages)
 
 # handle all learning forced by user (manual learn) - dragging around folders
-imap_classifier.manual_learn_all
+imap_classifier.manual_learn_all(move_messages)
