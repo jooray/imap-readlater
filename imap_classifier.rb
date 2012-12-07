@@ -17,7 +17,7 @@ end
 
 def learn_message(uid, envelope)
   if known_uid?(uid)
-	dd "UID #{uid} already known"
+	#dd "UID #{uid} already known"
 	return
   end
   c=Conversation.new
