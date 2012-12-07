@@ -53,16 +53,36 @@ def learn_message(uid, envelope)
 
 end
 
+def message_check_manual_learn(uid, envelope, symbol = 'i')
+	mailbox=envelope.from[0].mailbox
+	domain=envelope.from[0].host
+
+	# is this a known message moved from other folder ?
+	msgid = MessageId.find_by_message_id(envelope.message_id)
+	if msgid.nil?   # we have not seen this message, let's just save it
+		msgid=MessageId.new
+		msgid.message_id=envelope.message_id
+		msgid.last_seen=symbol
+		msgid.save
+		false
+	elsif msgid.last_seen != symbol
+		handle_manual_learn(uid, envelope, msgid.last_seen, symbol)
+		true
+	else
+		false
+	end
+end
+
 
 def message_classification(uid, envelope)
 	mailbox=envelope.from[0].mailbox
 	domain=envelope.from[0].host
-	# if we already know classification, print that
 
+	# if we already know classification, print that
 	c = Classification.find_by_mailbox_and_domain(mailbox, domain)
 	unless c.nil?
 		#dd "Mail from #{mailbox}@#{domain} already classified as #{c.movetolater? ? "read later" : "stay in inbox"} by #{c.byuser? ? "user" : "machine"}"
-		return c.movetolater?
+		return classification_to_symbol(c.movetolater, c.blackhole)
 	end
 
 	# if we reply to the sender of this message (often), keep it in inbox
@@ -79,6 +99,7 @@ def message_classification(uid, envelope)
 	end
 	read_later=false
 	save_classification = true
+	blackhole=false
 	if count < 1
 		# OK, our user does not write to this address. Is this address new?
 		a=Conversation.find_by_frommailbox_and_fromdomain(mailbox, domain)
@@ -103,8 +124,11 @@ def message_classification(uid, envelope)
 
 	learn_message(uid, envelope) # record the conversation
 
+	symbol = classification_to_symbol(read_later, blackhole)
+	register_message(uid, envelope, symbol) # register the message-id for detecting manual learning
+
 	dd "Mail from #{mailbox}@#{domain} classified as #{read_later ? "read later" : "stay in inbox"}"
-	read_later
+	symbol
 
 end
 
@@ -118,12 +142,20 @@ def classify_folder(folder, filter="ALL", move_messages=false)
 	end
 	errorless = true
 	foreach_msg_in_folder(folder, filter, (not move_messages)) do |uid, envelope|
-		unless known_uid?(uid)
-			if message_classification(uid, envelope) and move_messages
+		# unless someone moved this message from other folder back to inbox (=> learn)
+		# or unless we have already processed it, perform classification
+		unless message_check_manual_learn(uid, envelope, 'i') or known_uid?(uid)
+			symbol = message_classification(uid, envelope)
+			if symbol != 'i' and move_messages
 				begin
-				  dd "Moving #{uid} to read_later"
-				  @imap.uid_copy(uid, @imap_config['laterfolder'])
-				  @imap.uid_store(uid, "+FLAGS", [:Deleted])
+				  if symbol == 'l'
+				  	  dd "Moving #{uid} to read_later"
+					  @imap.uid_copy(uid, @imap_config['laterfolder'])
+					  @imap.uid_store(uid, "+FLAGS", [:Deleted])
+				  elsif symbol == 'b'
+				  	  dd "Deleting: #{uid} blackholed"
+					  @imap.uid_store(uid, "+FLAGS", [:Deleted])
+				  end
 				rescue Exception => e
 				  de "Error occured while moving message #{uid}: #{e.message}"
 				  de e.backtrace.inspect
@@ -138,15 +170,91 @@ def classify_folder(folder, filter="ALL", move_messages=false)
 	errorless
 end
 
-def print_uuid(uid, envelope)
-	dd "#{envelope.from[0].mailbox}@#{envelope.from[0].host}: #{uid}"
+def handle_manual_learn(uid, envelope, oldsymbol, newsymbol)
+        mailbox=envelope.from[0].mailbox
+        domain=envelope.from[0].host
+
+	c = Classification.find_by_mailbox_and_domain(mailbox, domain)
+	if c.nil?
+		c=Classification.new
+		c.mailbox=mailbox
+		c.domain=domain
+	end
+
+	c.byuser=true
+
+	c.movetolater = (newsymbol == 'l')
+	c.blackhole = (newsymbol == 'b')
+
+	c.save
+
+	message_id = MessageId.find_by_message_id(envelope.message_id)
+	if message_id
+		message_id.last_seen=newsymbol
+		message_id.save
+	end
+	dd "Manually learned that #{mailbox}@#{domain} should #{c.movetolater ? "" : "not"} move to Later and should #{c.blackhole ? "" : "not"} be in blackhole" 
 end
 
-def print_uids_in_folder(folder, filter="ALL")
-	foreach_msg_in_folder(folder, filter) { |uid, envelope| print_uuid uid,envelope }
+def train_from_folder(folder, symbol, filter="ALL")
+	foreach_msg_in_folder(folder, filter) do |uid, envelope|
+		oldsymbol=register_message(uid, envelope, symbol)
+		if oldsymbol != symbol
+			handle_manual_learn(uid, envelope, oldsymbol, symbol)
+		end
+	end
 end
+
+def folder_check_manual_learn(folder, symbol, filter = 'ALL', delete_after_classification = false)
+	@imap.select(folder)
+	@imap.expunge
+	foreach_msg_in_folder(folder, filter, (not delete_after_classification)) do |uid, envelope|
+		message_check_manual_learn(uid, envelope, symbol)
+		if delete_after_classification
+			 @imap.uid_store(uid, "+FLAGS", [:Deleted])
+		end
+	end
+	@imap.expunge if delete_after_classification
+end
+
+def manual_learn_all
+	create_folder_if_nonexistant(@imap_config['laterfolder'])
+	create_folder_if_nonexistant(@imap_config['blackholefolder'])
+	folder_check_manual_learn(@imap_config['laterfolder'], 'l', 'ALL', false)
+	folder_check_manual_learn(@imap_config['blackholefolder'], 'b', 'ALL', true)
+end
+
+
 
 private
+
+def classification_to_symbol(movetolater, blackhole)
+		symbol = 'i'
+		if blackhole
+			symbol = 'b'
+		elsif movetolater
+			symbol = 'l'
+		end
+		symbol
+end
+
+def register_message(uid, envelope, symbol)
+		message_id = envelope.message_id
+		m=MessageId.find_by_message_id(message_id)
+		if m
+			if m.last_seen != symbol
+				oldsymbol=symbol
+				m.last_seen = symbol
+				m.save
+				return oldsymbol
+			end
+		else
+			m=MessageId.new
+			m.message_id=message_id
+			m.last_seen=symbol
+		end
+		symbol
+end
 
 def foreach_msg_in_folder(folder, filter="ALL", read_only=true)
 	if read_only
@@ -203,7 +311,7 @@ end
 
 def create_folder_if_nonexistant(folder)
 	unless @imap.list("", folder) 
-		imap.create(folder)
+		@imap.create(folder)
 	end
 end
 

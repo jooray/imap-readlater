@@ -7,4 +7,5 @@ default:
    folders: ['Sent', 'backup']
    myfromaddr: ['one@example.com', 'two@example.com']
    laterfolder: '@Later'
+   blackholefolder: '@Blackhole'
 

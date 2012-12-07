@@ -9,4 +9,7 @@ end
 class SeenUid < ActiveRecord::Base
 end
 
+class MessageId < ActiveRecord::Base
+end
+
 
