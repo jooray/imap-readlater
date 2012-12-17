@@ -116,6 +116,6 @@ while daemon or (run==0)
 			puts "Doing classification for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
 			classify(imap_classifier, move_messages, verbose)
 		end
-		sleep run_each if daemon
 	end
+	sleep run_each if daemon
 end
