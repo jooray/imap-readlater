@@ -9,3 +9,15 @@ default:
    laterfolder: '@Later'
    blackholefolder: '@Blackhole'
 
+gmail:
+   imapserver: imap.gmail.com
+   imapport: 993
+   ssl: true
+   login: login@gmail.com
+   password: ask
+   folders: ['[Gmail]/All Mail', '[Gmail]/Sent Mail']
+   myfromaddr: ['asterisk4juraj@gmail.com']
+   laterfolder: '@Later'
+   blackholefolder: '@Blackhole'
+
+

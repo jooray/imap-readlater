@@ -6,7 +6,9 @@ require 'net/imap'
 
 recent = ARGV.delete("-r")
 
-imap_config = YAML.load_file('config/imap.yml')['default']
+account_desc = ARGV[0] || "default"
+
+imap_config = YAML.load_file('config/imap.yml')[account_desc]
 imap_classifier = ImapClassifier.new(imap_config)
 
 imap_classifier.connect

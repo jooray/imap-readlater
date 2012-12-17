@@ -7,12 +7,20 @@ class ImapClassifier
 DEBUG=true
 
 def initialize(configuration)
-	@imap_config = YAML.load_file('config/imap.yml')['default']
+	@imap_config = configuration
 end
 
 def connect
 	@imap = Net::IMAP.new(@imap_config['imapserver'], @imap_config['imapport'], @imap_config['ssl'])
 	@imap.login(@imap_config['login'], @imap_config['password'])
+end
+
+def folders
+	@imap_config['folders']
+end
+
+def imap_config
+	@imap_config
 end
 
 def learn_message(uid, envelope)
@@ -164,7 +172,7 @@ def classify_folder(folder, filter="ALL", move_messages=false)
 			end
 		end
 	end
-	if errorless
+	if errorless and move_messages
 		@imap.expunge
 	end
 	errorless
