@@ -258,12 +258,12 @@ end
 
 def manual_classify(email, symbol)
 	mailbox, domain = email.split(/@/)
-	c = Classification.find_by_mailbox_and_domain_and_imap_group(mailbox, domain, @account.imap_group)
+	c = Classification.find_by_mailbox_and_domain_and_imap_group(mailbox, domain, @imap_config['accountgroup'])
 	unless c
 		c=Classification.new
 		c.mailbox=mailbox
 		c.domain=domain
-		c.imap_group=@account.imap_group
+		c.imap_group=@imap_config['accountgroup']
 	end
 	c.byuser=true
 	c.movetolater=symbol_to_movetolater(symbol)
