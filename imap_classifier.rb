@@ -111,7 +111,9 @@ def message_classification(uid, envelope)
 	c = Classification.find_by_mailbox_and_domain_and_imap_group(mailbox, domain, @account.imap_group)
 	unless c.nil?
 		#dd "Mail from #{mailbox}@#{domain} already classified as #{c.movetolater? ? "read later" : "stay in inbox"} by #{c.byuser? ? "user" : "machine"}"
-		return classification_to_symbol(c.movetolater, c.blackhole)
+		symbol = classification_to_symbol(c.movetolater, c.blackhole)
+		register_message(uid, envelope, symbol) # register the message-id for detecting manual learning
+		return symbol
 	end
 
 	# if we reply to the sender of this message (often), keep it in inbox
@@ -224,7 +226,8 @@ def handle_manual_learn(uid, envelope, oldsymbol, newsymbol)
 		message_id.last_seen=newsymbol
 		message_id.save
 	end
-	dd "Manually learnt that #{mailbox}@#{domain} should #{c.movetolater ? "" : "not"} move to later and should #{c.blackhole ? "" : "not"} be in blackhole. #{oldsymbol}->#{newsymbol}" 
+	dd "Message classification manual change #{oldsymbol}->#{newsymbol}: #{mailbox}@#{domain}" 
+
 end
 
 def train_from_folder(folder, symbol, filter="ALL")
