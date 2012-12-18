@@ -61,6 +61,9 @@ TODO
 TODO: Lots :)
  - List of bulk mailers to filter (those that send newsletters like mailchimp)
  - Handle Facebook notifications better (regexp support?)
+ - Add indexes
+ - With -r, make classification search for RECENT first and then possible NEW (if IMAP NEW has the behaviour I think
+   it has, we can scan inbox even more often by default)
 
 Copying
 -------
