@@ -224,7 +224,7 @@ def handle_manual_learn(uid, envelope, oldsymbol, newsymbol)
 		message_id.last_seen=newsymbol
 		message_id.save
 	end
-	dd "Manually learnt that #{mailbox}@#{domain} should #{c.movetolater ? "" : "not"} move to later and should #{c.blackhole ? "" : "not"} be in blackhole. #{oldsymbol}->#{symbol}" 
+	dd "Manually learnt that #{mailbox}@#{domain} should #{c.movetolater ? "" : "not"} move to later and should #{c.blackhole ? "" : "not"} be in blackhole. #{oldsymbol}->#{newsymbol}" 
 end
 
 def train_from_folder(folder, symbol, filter="ALL")
