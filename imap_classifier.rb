@@ -25,6 +25,8 @@ def connect
 		account.server=@imap_config['imapserver']
 		account.imap_group=@imap_config['accountgroup']
 		account.save
+		dd "This account is seen for the first time, copying default domain rules for bulk mail classification"
+		copy_template_rules
 	elsif account.imap_group != @imap_config['accountgroup']
 		account.imap_group=@imap_config['accountgroup']
 		account.save
@@ -109,6 +111,7 @@ def message_classification(uid, envelope)
 
 	# if we already know classification, print that
 	c = Classification.find_by_mailbox_and_domain_and_imap_group(mailbox, domain, @account.imap_group)
+	c = Classification.find_by_mailbox_and_domain_and_imap_group('%', domain, @account.imap_group) if c.nil?
 	unless c.nil?
 		#dd "Mail from #{mailbox}@#{domain} already classified as #{c.movetolater? ? "read later" : "stay in inbox"} by #{c.byuser? ? "user" : "machine"}"
 		symbol = classification_to_symbol(c.movetolater, c.blackhole)
@@ -207,6 +210,15 @@ def handle_manual_learn(uid, envelope, oldsymbol, newsymbol)
         domain=envelope.from[0].host
 
 	c = Classification.find_by_mailbox_and_domain_and_imap_group(mailbox, domain, @account.imap_group)
+
+	# What should be the behaviour? If we have a full-domain rule and user reclassifies, should we
+	# reclassify whole domain or just the particular sender?
+	# We'll leave it as domain unless it's a blackhole (it's a safer thing to do than to blackhole a whole
+	# domain)
+	if c.nil? and newsymbol!='b'
+		c = Classification.find_by_mailbox_and_domain_and_imap_group('%', domain, @account.imap_group) 
+	end
+
 	if c.nil?
 		c=Classification.new
 		c.mailbox=mailbox
@@ -319,11 +331,14 @@ def foreach_msg_in_folder(folder, filter="ALL", read_only=true)
 		@imap.select(folder)
 	end
 	@imap.search(filter).each do |msg_id|
-	  msg = @imap.fetch(msg_id, ["UID", "ENVELOPE"])[0]
-	  envelope = msg.attr["ENVELOPE"]
-	  uid = msg.attr["UID"]
- 
-          yield uid, envelope
+	  msgs = @imap.fetch(msg_id, ["UID", "ENVELOPE"])
+	  if msgs
+		msg = msgs[0]
+		envelope = msg.attr["ENVELOPE"]
+		uid = msg.attr["UID"]
+	 
+		yield uid, envelope
+	  end
 
 	end
 
@@ -374,6 +389,19 @@ end
 
 def find_message_id(message_id)
 	MessageId.find_by_message_id_and_imap_account_id(message_id, @account.id)
+end
+
+def copy_template_rules
+	Classification.find_all_imap_group('_template').each do |ctempl|
+		cl = Classification.new
+		cl.mailbox=ctempl.mailbox
+		cl.domain=ctempl.domain
+		cl.movetolater=ctempl.movetolater
+		cl.blackhole=ctempl.blackhole
+		cl.imapgroup=@imap_config['accountgroup']
+		cl.save
+	end
+	
 end
 
 
