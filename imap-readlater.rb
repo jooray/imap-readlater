@@ -97,7 +97,6 @@ accounts.each do |account_desc|
 end
 
 run = 0
-first_run = true
 
 filter="ALL"
 
@@ -107,7 +106,7 @@ end
 
 
 
-while daemon or (first_run)
+while daemon or (run == 0)
 	classifiers.each do |imap_classifier|
 		if do_fetchheaders and (run.modulo(fetch_every) == 0)
 			puts "Fetching headers for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
@@ -120,8 +119,7 @@ while daemon or (first_run)
 			classify(imap_classifier, move_messages, filter, verbose)
 		end
 	end
-	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if first_run
-	first_run = false
+	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if run == 0
 	run += 1
 
 	sleep run_each if daemon
