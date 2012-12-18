@@ -11,8 +11,27 @@ def initialize(configuration)
 end
 
 def connect
+
 	@imap = Net::IMAP.new(@imap_config['imapserver'], @imap_config['imapport'], @imap_config['ssl'])
 	@imap.login(@imap_config['login'], @imap_config['password'])
+
+	unless @imap_config['accountgroup']
+		@imap_config['accountgroup']="#{@imap_config['login']}@#{@imap_config['imapserver']}"
+	end
+	account = ImapAccount.find_by_login_and_server(@imap_config['login'], @imap_config['imapserver'])
+	if account.nil?
+		account=ImapAccount.new
+		account.login=@imap_config['login']
+		account.server=@imap_config['imapserver']
+		account.imap_group=@imap_config['accountgroup']
+		account.save
+	elsif account.imap_group != @imap_config['accountgroup']
+		account.imap_group=@imap_config['accountgroup']
+		account.save
+	end
+
+	@account=account
+	
 end
 
 def folders
@@ -38,9 +57,10 @@ def learn_message(uid, envelope)
           c.todomain = envelope.to[0].host
   end
   c.conversations = 0
+  c.imap_group=@account.imap_group
 
 
-  conversations = Conversation.where("frommailbox = ? AND fromdomain = ? AND tomailbox = ? AND todomain = ?", c.frommailbox, c.fromdomain, c.tomailbox, c.todomain)
+  conversations = Conversation.where("frommailbox = ? AND fromdomain = ? AND tomailbox = ? AND todomain = ? AND imap_group = ?", c.frommailbox, c.fromdomain, c.tomailbox, c.todomain, @account.imap_group)
 
   unless conversations.nil? or conversations[0].nil?
     c=conversations[0]
@@ -66,11 +86,12 @@ def message_check_manual_learn(uid, envelope, symbol = 'i')
 	domain=envelope.from[0].host
 
 	# is this a known message moved from other folder ?
-	msgid = MessageId.find_by_message_id(envelope.message_id)
+	msgid = find_message_id(envelope.message_id)
 	if msgid.nil?   # we have not seen this message, let's just save it
 		msgid=MessageId.new
 		msgid.message_id=envelope.message_id
 		msgid.last_seen=symbol
+		msgid.imap_account=@account
 		msgid.save
 		false
 	elsif msgid.last_seen != symbol
@@ -87,7 +108,7 @@ def message_classification(uid, envelope)
 	domain=envelope.from[0].host
 
 	# if we already know classification, print that
-	c = Classification.find_by_mailbox_and_domain(mailbox, domain)
+	c = Classification.find_by_mailbox_and_domain_and_imap_group(mailbox, domain, @account.imap_group)
 	unless c.nil?
 		#dd "Mail from #{mailbox}@#{domain} already classified as #{c.movetolater? ? "read later" : "stay in inbox"} by #{c.byuser? ? "user" : "machine"}"
 		return classification_to_symbol(c.movetolater, c.blackhole)
@@ -96,7 +117,7 @@ def message_classification(uid, envelope)
 	# if we reply to the sender of this message (often), keep it in inbox
 	# TODO: often could be also percentage if there's a large number of e-mails
 
-	conversations=Conversation.find_all_by_tomailbox_and_todomain(mailbox, domain).select {|a| is_myaddr("#{a.frommailbox}@#{a.fromdomain}") }
+	conversations=Conversation.find_all_by_tomailbox_and_todomain_and_imap_group(mailbox, domain, @account.imap_group).select {|a| is_myaddr("#{a.frommailbox}@#{a.fromdomain}") }
 	count = 0
 	unless conversations.nil?
 		conversations.each do |r|
@@ -110,7 +131,7 @@ def message_classification(uid, envelope)
 	blackhole=false
 	if count < 1
 		# OK, our user does not write to this address. Is this address new?
-		a=Conversation.find_by_frommailbox_and_fromdomain(mailbox, domain)
+		a=Conversation.find_by_frommailbox_and_fromdomain_and_imap_group(mailbox, domain, @account.imap_group)
 		if a.nil? or a.conversations < 1
 			# this address is new. Keep in inbox, but don't remember classification =>
 			# if the user does not reply to this e-mail, new e-mail from this address
@@ -127,6 +148,7 @@ def message_classification(uid, envelope)
 		cl.domain = domain
 		cl.byuser = false
 		cl.movetolater = read_later
+		cl.imap_group = @account.imap_group
 		cl.save
 	end
 
@@ -182,11 +204,12 @@ def handle_manual_learn(uid, envelope, oldsymbol, newsymbol)
         mailbox=envelope.from[0].mailbox
         domain=envelope.from[0].host
 
-	c = Classification.find_by_mailbox_and_domain(mailbox, domain)
+	c = Classification.find_by_mailbox_and_domain_and_imap_group(mailbox, domain, @account.imap_group)
 	if c.nil?
 		c=Classification.new
 		c.mailbox=mailbox
 		c.domain=domain
+		c.imap_group=@account.imap_group
 	end
 
 	c.byuser=true
@@ -196,12 +219,12 @@ def handle_manual_learn(uid, envelope, oldsymbol, newsymbol)
 
 	c.save
 
-	message_id = MessageId.find_by_message_id(envelope.message_id)
+	message_id = find_message_id(envelope.message_id)
 	if message_id
 		message_id.last_seen=newsymbol
 		message_id.save
 	end
-	dd "Manually learned that #{mailbox}@#{domain} should #{c.movetolater ? "" : "not"} move to Later and should #{c.blackhole ? "" : "not"} be in blackhole" 
+	dd "Manually learnt that #{mailbox}@#{domain} should #{c.movetolater ? "" : "not"} move to Later and should #{c.blackhole ? "" : "not"} be in blackhole" 
 end
 
 def train_from_folder(folder, symbol, filter="ALL")
@@ -235,11 +258,12 @@ end
 
 def manual_classify(email, symbol)
 	mailbox, domain = email.split(/@/)
-	c = Classification.find_by_mailbox_and_domain(mailbox, domain)
+	c = Classification.find_by_mailbox_and_domain_and_imap_group(mailbox, domain, @account.imap_group)
 	unless c
 		c=Classification.new
 		c.mailbox=mailbox
 		c.domain=domain
+		c.imap_group=@account.imap_group
 	end
 	c.byuser=true
 	c.movetolater=symbol_to_movetolater(symbol)
@@ -268,7 +292,7 @@ end
 
 def register_message(uid, envelope, symbol)
 		message_id = envelope.message_id
-		m=MessageId.find_by_message_id(message_id)
+		m=find_message_id(message_id)
 		if m
 			if m.last_seen != symbol
 				oldsymbol=symbol
@@ -279,6 +303,7 @@ def register_message(uid, envelope, symbol)
 		else
 			m=MessageId.new
 			m.message_id=message_id
+			m.imap_account=@account
 			m.last_seen=symbol
 		end
 		symbol
@@ -311,12 +336,13 @@ def de(what)
 end
 
 def known_uid?(uid)
-	not SeenUid.find_by_uid(uid).nil?
+	not SeenUid.find_by_uid_and_imap_account_id(uid, @account.id).nil?
 end
 
 def mark_as_seen(uid)
 	seen = SeenUid.new
 	seen.uid = uid
+	seen.imap_account = @account
 	seen.save
 end
 
@@ -341,6 +367,10 @@ def create_folder_if_nonexistant(folder)
 	unless @imap.list("", folder) 
 		@imap.create(folder)
 	end
+end
+
+def find_message_id(message_id)
+	MessageId.find_by_message_id_and_imap_account_id(message_id, @account.id)
 end
 
 

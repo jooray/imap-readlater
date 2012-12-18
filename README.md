@@ -60,7 +60,6 @@ TODO
 
 TODO: Lots :)
  - List of bulk mailers
- - Implement account classes (needs schema change)
 
 Copying
 -------

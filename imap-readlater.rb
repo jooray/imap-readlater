@@ -110,12 +110,12 @@ while daemon or (run==0)
 			fetch_headers(imap_classifier, recent, verbose)
 			run = 0
 		end	
-		run += 1
 
 		if do_classify
 			puts "Doing classification for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
 			classify(imap_classifier, move_messages, verbose)
 		end
 	end
+	run += 1
 	sleep run_each if daemon
 end

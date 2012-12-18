@@ -1,14 +1,27 @@
+# Definition called 'default' will be used if no account is specified. 
+# Other accounts do not inherit from 'default' right now, so every option has to be
+# specified in all instances
+
 default:
    imapserver: server.example.com
    imapport: 993
    ssl: true
    login: login
+   # If password is string 'ask', the tool will ask for the password on the prompt
    password: password
+   # Folders to scan - it is important to have all archive and sent e-mail folders here
    folders: ['Sent', 'backup']
+   # What is the list of addresses you write from? Can be a regexp string
    myfromaddr: ['one@example.com', 'two@example.com']
+   # Where to put e-mail to read later (imap-classify will create necessary folders)
    laterfolder: '@Later'
+   # Scan this folder and put everything there to blackhole (based on From header)
    blackholefolder: '@Blackhole'
+   # If you want to share knowledge and classifications among multiple accounts, put those accounts to a same
+   # account group. Keep it short and unique per account group.
+   accountgroup: 'user1'
 
+# Example gmail account with correct settings
 gmail:
    imapserver: imap.gmail.com
    imapport: 993
@@ -19,5 +32,5 @@ gmail:
    myfromaddr: ['asterisk4juraj@gmail.com']
    laterfolder: '@Later'
    blackholefolder: '@Blackhole'
-
+   accountgroup: 'user1'
 
