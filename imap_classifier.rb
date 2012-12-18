@@ -18,6 +18,12 @@ def connect
 	unless @imap_config['accountgroup']
 		@imap_config['accountgroup']="#{@imap_config['login']}@#{@imap_config['imapserver']}"
 	end
+
+	unless ImapAccount.find_by_imap_group(@imap_config['accountgroup'])
+		dd "This account group is seen for the first time, copying default domain rules for bulk mail classification"
+		copy_template_rules
+	end
+
 	account = ImapAccount.find_by_login_and_server(@imap_config['login'], @imap_config['imapserver'])
 	if account.nil?
 		account=ImapAccount.new
@@ -25,8 +31,6 @@ def connect
 		account.server=@imap_config['imapserver']
 		account.imap_group=@imap_config['accountgroup']
 		account.save
-		dd "This account is seen for the first time, copying default domain rules for bulk mail classification"
-		copy_template_rules
 	elsif account.imap_group != @imap_config['accountgroup']
 		account.imap_group=@imap_config['accountgroup']
 		account.save
@@ -331,13 +335,15 @@ def foreach_msg_in_folder(folder, filter="ALL", read_only=true)
 		@imap.select(folder)
 	end
 	@imap.search(filter).each do |msg_id|
-	  msgs = @imap.fetch(msg_id, ["UID", "ENVELOPE"])
-	  if msgs
-		msg = msgs[0]
-		envelope = msg.attr["ENVELOPE"]
-		uid = msg.attr["UID"]
-	 
-		yield uid, envelope
+	  if msg_id
+		  msgs = @imap.fetch(msg_id, ["UID", "ENVELOPE"])
+		  if msgs
+			msg = msgs[0]
+			envelope = msg.attr["ENVELOPE"]
+			uid = msg.attr["UID"]
+		 
+			yield uid, envelope
+		  end
 	  end
 
 	end
@@ -392,13 +398,13 @@ def find_message_id(message_id)
 end
 
 def copy_template_rules
-	Classification.find_all_imap_group('_template').each do |ctempl|
+	Classification.find_all_by_imap_group('_template').each do |ctempl|
 		cl = Classification.new
 		cl.mailbox=ctempl.mailbox
 		cl.domain=ctempl.domain
 		cl.movetolater=ctempl.movetolater
 		cl.blackhole=ctempl.blackhole
-		cl.imapgroup=@imap_config['accountgroup']
+		cl.imap_group=@imap_config['accountgroup']
 		cl.save
 	end
 	

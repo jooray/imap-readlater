@@ -59,11 +59,8 @@ TODO
 ----
 
 TODO: Lots :)
- - List of bulk mailers to filter (those that send newsletters like mailchimp)
-   - filter by domain
-   - filter by sending server's IP
- - Handle Facebook notifications better (regexp support?)
- - Add indexes
+ - Better list of bulk mailers to filter (those that send newsletters like mailchimp)
+   - allow to filter by SMTP server's IP
 
 Copying
 -------
