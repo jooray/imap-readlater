@@ -59,7 +59,8 @@ TODO
 ----
 
 TODO: Lots :)
- - List of bulk mailers
+ - List of bulk mailers to filter (those that send newsletters like mailchimp)
+ - Handle Facebook notifications better (regexp support?)
 
 Copying
 -------
