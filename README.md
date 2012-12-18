@@ -41,10 +41,10 @@ Setup
    
 	touch db/development.sqlite.db ; rake db:migrate
    
-4. run "imap-readlater.rb -f -v default" to learn, this can take a few hours
-5. run "imap-readlater.rb -d -c -v default". It will dump on stdout what it thinks about the e-mails in your inbox
+4. run "imap-readlater.rb -f -v -a default" to learn, this can take a few hours
+5. run "imap-readlater.rb -d -c -v -a default". It will dump on stdout what it thinks about the e-mails in your inbox
 6. if you are confident about the results, you can omit the "-d" (dry run), it will move the messages
-7. You can run "imap-readlater.rb -D -r default &". It will classify and learn from new e-mail.
+7. You can run "imap-readlater.rb -D default &". It will classify and learn from new e-mail.
 
 While I can not guarantee your e-mail safety, I run this on my production mailboxes already. As far as I know it does
 not eat my e-mail. YMMV.
@@ -60,10 +60,10 @@ TODO
 
 TODO: Lots :)
  - List of bulk mailers to filter (those that send newsletters like mailchimp)
+   - filter by domain
+   - filter by sending server's IP
  - Handle Facebook notifications better (regexp support?)
  - Add indexes
- - With -r, make classification search for RECENT first and then possible NEW (if IMAP NEW has the behaviour I think
-   it has, we can scan inbox even more often by default)
 
 Copying
 -------

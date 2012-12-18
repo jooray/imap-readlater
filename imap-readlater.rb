@@ -16,7 +16,7 @@ on command line or configuration called 'default' if none are specified
 	-D	Daemon mode. Daemon processes all accounts and does fetch and
 		learn and classification by default. If -c or -f is specified,
 		only classification or learning will be performed
-	-r	Only process recent messages in fetch and learn
+	-a	Process all messages, not only recent
 	-v	Verbose
 	-d	Dry run (do not move any messages, just write what would be
 		done)
@@ -25,21 +25,16 @@ on command line or configuration called 'default' if none are specified
 eos
 end
 
-def classify(imap_classifier, move_messages, verbose)
-	imap_classifier.classify_folder('INBOX', "ALL", move_messages)
+def classify(imap_classifier, move_messages, filter, verbose)
+
+	imap_classifier.classify_folder('INBOX', filter, move_messages)
 
 	# handle all learning forced by user (manual learn) - dragging around folders
-	imap_classifier.manual_learn_all(move_messages)
+	imap_classifier.manual_learn_all(move_messages, filter)
 end
 
-def fetch_headers(imap_classifier, recent, verbose)
+def fetch_headers(imap_classifier, filter, verbose)
 	folders = imap_classifier.folders
-
-	filter="ALL"
-
-	if recent
-		filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}"
-	end
 
 	folders.each do |folder|
 		puts "Processing folder #{folder} using filter #{filter}" if verbose
@@ -53,7 +48,7 @@ fetch_every = 15 # In daemon mode, do learning on all folders every fetch_every 
 do_classify = ARGV.delete("-c")
 do_fetchheaders = ARGV.delete("-f")
 daemon = ARGV.delete("-D")
-recent = ARGV.delete("-r")
+process_all = ARGV.delete("-a")
 verbose = ARGV.delete("-v")
 dry_run = ARGV.delete("-d")
 
@@ -102,20 +97,32 @@ accounts.each do |account_desc|
 end
 
 run = 0
+first_run = true
 
-while daemon or (run==0)
+filter="ALL"
+
+unless process_all
+	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.today.weeks_ago(1))}"
+end
+
+
+
+while daemon or (first_run)
 	classifiers.each do |imap_classifier|
 		if do_fetchheaders and (run.modulo(fetch_every) == 0)
 			puts "Fetching headers for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
-			fetch_headers(imap_classifier, recent, verbose)
+			fetch_headers(imap_classifier, filter , verbose)
 			run = 0
 		end	
 
 		if do_classify
 			puts "Doing classification for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
-			classify(imap_classifier, move_messages, verbose)
+			classify(imap_classifier, move_messages, filter, verbose)
 		end
 	end
+	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if first_run
+	first_run = false
 	run += 1
+
 	sleep run_each if daemon
 end

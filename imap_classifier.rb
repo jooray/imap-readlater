@@ -248,11 +248,11 @@ def folder_check_manual_learn(folder, symbol, filter = 'ALL', delete_after_class
 	@imap.expunge if delete_after_classification
 end
 
-def manual_learn_all(move_messages = true)
+def manual_learn_all(move_messages = true, filter = 'ALL')
 	create_folder_if_nonexistant(@imap_config['laterfolder'])
 	create_folder_if_nonexistant(@imap_config['blackholefolder'])
-	folder_check_manual_learn(@imap_config['laterfolder'], 'l', 'ALL', false)
-	folder_check_manual_learn(@imap_config['blackholefolder'], 'b', 'ALL', move_messages)
+	folder_check_manual_learn(@imap_config['laterfolder'], 'l', filter, false)
+	folder_check_manual_learn(@imap_config['blackholefolder'], 'b', filter, move_messages)
 end
 
 
