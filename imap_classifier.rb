@@ -336,6 +336,7 @@ def foreach_msg_in_folder(folder, filter="ALL", read_only=true)
 	end
 	@imap.search(filter).each do |msg_id|
 	  if msg_id
+		begin
 		  msgs = @imap.fetch(msg_id, ["UID", "ENVELOPE"])
 		  if msgs
 			msg = msgs[0]
@@ -344,6 +345,11 @@ def foreach_msg_in_folder(folder, filter="ALL", read_only=true)
 		 
 			yield uid, envelope
 		  end
+		rescue Net::IMAP::NoResponseError => e
+		  dd "Error: "
+		  dd e
+		  dd "Note: This usually happens when the message is deleted by other connection before fetching it."
+		end
 	  end
 
 	end

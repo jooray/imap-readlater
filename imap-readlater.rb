@@ -108,15 +108,27 @@ end
 
 while daemon or (run == 0)
 	classifiers.each do |imap_classifier|
-		if do_fetchheaders and (run.modulo(fetch_every) == 0)
-			puts "Fetching headers for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
-			fetch_headers(imap_classifier, filter , verbose)
-			run = 0
-		end	
+		begin
+			if do_fetchheaders and (run.modulo(fetch_every) == 0)
+				puts "Fetching headers for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
+				fetch_headers(imap_classifier, filter , verbose)
+				run = 0
+			end	
 
-		if do_classify
-			puts "Doing classification for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
-			classify(imap_classifier, move_messages, filter, verbose)
+			if do_classify
+				puts "Doing classification for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
+				classify(imap_classifier, move_messages, filter, verbose)
+			end
+		
+		rescue Errno::EPIPE => e
+			puts STDERR, "Connection error: Connection closed unexpectedly (#{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}"
+			puts STDERR, e
+			if run == 0
+				exit 1
+			else
+				puts STDERR, "Daemon mode, reconnecting and continuing."
+				imap_classifier.connect
+			end
 		end
 	end
 	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if run == 0
