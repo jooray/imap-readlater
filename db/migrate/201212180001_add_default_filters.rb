@@ -4,7 +4,7 @@ class Classification < ActiveRecord::Base
 end
 
   def up
-        domains_for_read_later = [ 'backclick.airberlin.com', 'facebookmail.com', 'linkedin.com', 'postmaster.twitter.com' ]
+        domains_for_read_later = [ 'backclick.airberlin.com', 'facebookmail.com', 'facebookappmail.com', 'linkedin.com', 'postmaster.twitter.com' ]
 	domains_for_read_later.each do |domain|
 		c=Classification.new
 		c.mailbox='%'
