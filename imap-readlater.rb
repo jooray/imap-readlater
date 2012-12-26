@@ -34,9 +34,7 @@ def classify(imap_classifier, move_messages, filter, verbose)
 end
 
 def fetch_headers(imap_classifier, filter, verbose)
-	folders = imap_classifier.folders
-
-	folders.each do |folder|
+	imap_classifier.folders.each do |folder|
 		puts "Processing folder #{folder} using filter #{filter}" if verbose
 		imap_classifier.learn_from_folder(folder, filter)
 	end

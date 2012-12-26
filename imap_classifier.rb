@@ -83,8 +83,6 @@ def learn_message(uid, envelope)
     dd e
   end
 
-
-
 end
 
 def message_check_manual_learn(uid, envelope, symbol = 'i')
@@ -104,7 +102,7 @@ def message_check_manual_learn(uid, envelope, symbol = 'i')
 		handle_manual_learn(uid, envelope, msgid.last_seen, symbol)
 		true
 	else
-		false
+		true
 	end
 end
 
@@ -183,16 +181,16 @@ def classify_folder(folder, filter="ALL", move_messages=false)
 	foreach_msg_in_folder(folder, filter, (not move_messages)) do |uid, envelope|
 		# unless someone moved this message from other folder back to inbox (=> learn)
 		# or unless we have already processed it, perform classification
-		unless message_check_manual_learn(uid, envelope, 'i') or known_uid?(uid)
+		unless message_check_manual_learn(uid, envelope, 'i')
 			symbol = message_classification(uid, envelope)
 			if symbol != 'i' and move_messages
 				begin
 				  if symbol == 'l'
-				  	  dd "Moving #{uid} to read_later"
+				  	  dd "Moving #{envelope.from[0].mailbox}@#{envelope.from[0].host} to read_later"
 					  @imap.uid_copy(uid, @imap_config['laterfolder'])
 					  @imap.uid_store(uid, "+FLAGS", [:Deleted])
 				  elsif symbol == 'b'
-				  	  dd "Deleting: #{uid} blackholed"
+				  	  dd "Deleting: #{envelope.from[0].mailbox}@#{envelope.from[0].host} blackholed"
 					  @imap.uid_store(uid, "+FLAGS", [:Deleted])
 				  end
 				rescue Exception => e
