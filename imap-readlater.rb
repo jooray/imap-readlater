@@ -1,6 +1,8 @@
+require 'rubygems'
+require 'bundler/setup'
+
 require 'yaml'
 require './imap_classifier'
-gem 'highline'
 require 'highline'
 
 def help

@@ -35,7 +35,10 @@ much simpler version myself. I am still fan of SaneBox.
 Setup
 -----
 
-1. Check prerequisities, we need these gems: activesupport activerecord sqlite3 highline (yes, I should learn to use bundler)
+1. Install dependencies:
+
+	bundle install
+
 2. Edit at least config/imap.yml. It needs to see your incoming mail folder (archive, backup) and especially your sent folder. There's also an example for gmail that you can use.
 3. run this:
    
