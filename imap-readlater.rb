@@ -120,7 +120,7 @@ while daemon or (run == 0)
 				classify(imap_classifier, move_messages, filter, verbose)
 			end
 		
-		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError => e
+		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError => e
 			puts STDERR, "Connection error: Connection closed unexpectedly (#{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}"
 			puts STDERR, e
 			if run == 0
