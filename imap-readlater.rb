@@ -109,6 +109,7 @@ end
 while daemon or (run == 0)
 	classifiers.each do |imap_classifier|
 		begin
+      imap_classifier.connect unless imap_classifier.connected?
 			if do_fetchheaders and (run.modulo(fetch_every) == 0)
 				puts "Fetching headers for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
 				fetch_headers(imap_classifier, filter , verbose)
@@ -120,14 +121,18 @@ while daemon or (run == 0)
 				classify(imap_classifier, move_messages, filter, verbose)
 			end
 		
-		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT => e
+		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError => e
 			puts STDERR, "Connection error: Connection closed unexpectedly (#{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}"
 			puts STDERR, e
 			if run == 0
 				exit 1
 			else
 				puts STDERR, "Daemon mode, reconnecting and continuing."
-				imap_classifier.connect
+				begin
+								imap_classifier.connect
+		    rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError => e
+								puts STDERR, "Unable to connect, will retry on next run."
+				end
 			end
 		end
 	end

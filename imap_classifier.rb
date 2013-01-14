@@ -8,9 +8,12 @@ DEBUG=true
 
 def initialize(configuration)
 	@imap_config = configuration
+  @connected = false
 end
 
 def connect
+
+  @connected=false
 
 	@imap = Net::IMAP.new(@imap_config['imapserver'], @imap_config['imapport'], @imap_config['ssl'])
 	@imap.login(@imap_config['login'], @imap_config['password'])
@@ -38,6 +41,11 @@ def connect
 
 	@account=account
 	
+  @connected=true
+end
+
+def connected?
+  @connected
 end
 
 def folders
