@@ -92,6 +92,13 @@ accounts.each do |account_desc|
 
 	imap_classifier.connect
 
+#  if verbose
+#		puts "I can see these folders for #{imap_config['login']}@#{imap_config['imapserver']}:"
+#		imap_classifier.list_folders.each do |f|
+#		  puts "#{f}"
+#    end
+#  end
+
 	classifiers << imap_classifier
 
 end

@@ -296,6 +296,11 @@ def manual_classify(email, symbol)
 	c.save
 end
 
+def list_folders
+  @imap.list("", "*")
+end
+
+
 private
 
 def symbol_to_movetolater(symbol)
