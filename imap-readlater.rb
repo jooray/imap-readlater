@@ -128,7 +128,7 @@ while daemon or (run == 0)
 				classify(imap_classifier, move_messages, filter, verbose)
 			end
 		
-		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET => e
+		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET, Net::IMAP::ResponseParseError => e
 			puts STDERR, "Connection error: Connection closed unexpectedly (#{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}"
 			puts STDERR, e
 			if run == 0
@@ -137,7 +137,7 @@ while daemon or (run == 0)
 				puts STDERR, "Daemon mode, reconnecting and continuing."
 				begin
 								imap_classifier.connect
-		    rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET => e
+		    rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET, Net::IMAP::ResponseParseError => e
 								puts STDERR, "Unable to connect, will retry on next run."
 				end
 			end
