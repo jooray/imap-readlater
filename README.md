@@ -64,6 +64,7 @@ TODO
 TODO: Lots :)
  - Better list of bulk mailers to filter (those that send newsletters like mailchimp)
    - allow to filter by SMTP server's IP
+ - A way to flag whole thread as not interesting. You know how people Cc: you on stuff you don't care about. Mark that thread and never receive another mail from this thread again. That would be cool.
 
 Copying
 -------
