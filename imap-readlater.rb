@@ -132,7 +132,7 @@ while daemon or first_run
 		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET, Net::IMAP::ResponseParseError, Errno::EHOSTUNREACH => e
 			puts STDERR, "Connection error: Connection closed unexpectedly (#{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}"
 			puts STDERR, e.message
-			if first_run == 0
+			if first_run  # if this is first run (regardless of daemon or one-off mode), exit
 				exit 1
 			else
 				puts STDERR, "Daemon mode, reconnecting and continuing."
