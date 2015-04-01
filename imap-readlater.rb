@@ -42,8 +42,8 @@ def fetch_headers(imap_classifier, filter, verbose)
 	end
 end
 
-run_each = 120 # In daemon mode, process all accounts every run_each seconds
-fetch_every = 15 # In daemon mode, do learning on all folders every fetch_every runs
+run_each = 100 # In daemon mode, process all accounts every run_each seconds
+fetch_every = 10 # In daemon mode, do learning on all folders every fetch_every runs
 
 do_classify = ARGV.delete("-c")
 do_fetchheaders = ARGV.delete("-f")
@@ -104,6 +104,7 @@ accounts.each do |account_desc|
 end
 
 run = 0
+first_run = true
 
 filter="ALL"
 
@@ -113,7 +114,7 @@ end
 
 
 
-while daemon or (run == 0)
+while daemon or first_run
 	classifiers.each do |imap_classifier|
 		begin
       imap_classifier.connect unless imap_classifier.connected?
@@ -130,8 +131,8 @@ while daemon or (run == 0)
 		
 		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET, Net::IMAP::ResponseParseError, Errno::EHOSTUNREACH => e
 			puts STDERR, "Connection error: Connection closed unexpectedly (#{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}"
-			puts STDERR, e
-			if run == 0
+			puts STDERR, e.message
+			if first_run == 0
 				exit 1
 			else
 				puts STDERR, "Daemon mode, reconnecting and continuing."
@@ -145,6 +146,7 @@ while daemon or (run == 0)
 	end
 	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if run == 0
 	run += 1
+	first_run = false
 
 	sleep run_each if daemon
 end
