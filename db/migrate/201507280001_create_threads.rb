@@ -1,7 +1,6 @@
 class CreateThreads < ActiveRecord::Migration
   def up
     create_table :threads do |t|
-      t.string :subject
 	    t.boolean :snooze
 	    t.integer :imap_account_id
 			t.timestamps null: false
