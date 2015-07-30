@@ -112,9 +112,8 @@ unless process_all
 	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.today.weeks_ago(1))}"
 end
 
-
-
 while daemon or first_run
+  errors_in_run = 0
 	classifiers.each do |imap_classifier|
 		begin
       imap_classifier.connect unless imap_classifier.connected?
@@ -130,11 +129,10 @@ while daemon or first_run
 			end
 		
 		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET, Net::IMAP::ResponseParseError, Errno::EHOSTUNREACH => e
+			errors_in_run += 1
 			puts STDERR, "Connection error: Connection closed unexpectedly (#{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}"
 			puts STDERR, e.message
-			if first_run  # if this is first run (regardless of daemon or one-off mode), exit
-				exit 1
-			else
+			if daemon
 				puts STDERR, "Daemon mode, reconnecting and continuing."
 				begin
 								imap_classifier.connect
@@ -144,9 +142,11 @@ while daemon or first_run
 			end
 		end
 	end
-	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if run == 0
-	run += 1
-	first_run = false
+	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if first_run
+  unless errors_in_run
+	  run += 1
+	  first_run = false
+  end
 
 	sleep run_each if daemon
 end
