@@ -184,6 +184,7 @@ end
 def classify_folder(folder, filter="ALL", move_messages=false)
 	if move_messages 
 		create_folder_if_nonexistant(@imap_config['laterfolder'])
+	  create_folder_if_nonexistant(@imap_config['snoozethreadfolder'])
 	end
 	errorless = true
 	foreach_msg_in_folder(folder, filter, (not move_messages)) do |uid, envelope|
@@ -276,6 +277,7 @@ end
 def manual_learn_all(move_messages = true, filter = 'ALL')
 	create_folder_if_nonexistant(@imap_config['laterfolder'])
 	create_folder_if_nonexistant(@imap_config['blackholefolder'])
+	create_folder_if_nonexistant(@imap_config['snoozethreadfolder'])
 	folder_check_manual_learn(@imap_config['laterfolder'], 'l', filter, false)
 	folder_check_manual_learn(@imap_config['blackholefolder'], 'b', filter, move_messages)
 end

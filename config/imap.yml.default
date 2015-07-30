@@ -17,6 +17,9 @@ default:
    laterfolder: '@Later'
    # Scan this folder and put everything there to blackhole (based on From header)
    blackholefolder: '@Blackhole'
+   # This is a folder where all the uninteresting threads stay (put a message here and all messages in this
+   # thread will be put in this folder in the future)
+   snoozethreadfolder: '@SnoozeThread'
    # If you want to share knowledge and classifications among multiple accounts, put those accounts to a same
    # account group. Keep it short and unique per account group.
    accountgroup: 'user1'
