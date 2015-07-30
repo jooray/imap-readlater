@@ -142,11 +142,9 @@ while daemon or first_run
 			end
 		end
 	end
-	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if first_run
-  unless errors_in_run
-	  run += 1
-	  first_run = false
-  end
+	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" unless errors_in_run
+	run += 1
+	first_run = false
 
 	sleep run_each if daemon
 end
