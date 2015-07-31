@@ -9,6 +9,7 @@ DEBUG=true
 def initialize(configuration)
 	@imap_config = configuration
   @connected = false
+  @learning_done = false
 end
 
 def connect
@@ -46,6 +47,14 @@ end
 
 def connected?
   @connected
+end
+
+def learning_done(is_done)
+	@learning_done = is_done
+end
+
+def is_learning_done?
+	@learning_done
 end
 
 def folders

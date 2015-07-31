@@ -38,7 +38,9 @@ end
 def fetch_headers(imap_classifier, filter, verbose)
 	imap_classifier.folders.each do |folder|
 		puts "Processing folder #{folder} using filter #{filter}" if verbose
+		imap_classifier.learning_done(false)
 		imap_classifier.learn_from_folder(folder, filter)
+		imap_classifier.learning_done(true)
 	end
 end
 
@@ -113,7 +115,6 @@ unless process_all
 end
 
 while daemon or first_run
-  errors_in_run = 0
 	classifiers.each do |imap_classifier|
 		begin
       imap_classifier.connect unless imap_classifier.connected?
@@ -129,7 +130,6 @@ while daemon or first_run
 			end
 		
 		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET, Net::IMAP::ResponseParseError, Errno::EHOSTUNREACH => e
-			errors_in_run += 1
 			puts STDERR, "Connection error: Connection closed unexpectedly (#{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}"
 			puts STDERR, e.message
 			if daemon
@@ -142,7 +142,9 @@ while daemon or first_run
 			end
 		end
 	end
-	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" unless errors_in_run
+	relax_filter = true
+	classifiers.each { |imap_classifier| relax_filter = false unless imap_classifier.is_learning_done? }
+	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if relax_filter
 	run += 1
 	first_run = false
 
