@@ -301,6 +301,19 @@ def list_folders
   @imap.list("", "*")
 end
 
+def set_filter(filter)
+	@filter = filter
+end
+
+def relax_filter
+	@filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}"
+end
+
+def filter
+	@filter
+end
+
+
 
 private
 
@@ -366,18 +379,6 @@ def foreach_msg_in_folder(folder, filter="ALL", read_only=true)
 
 	end
 
-end
-
-def set_filter(filter)
-	@filter = filter
-end
-
-def relax_filter
-	@filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}"
-end
-
-def filter
-	@filter
 end
 
 def dd(what)
