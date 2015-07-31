@@ -27,21 +27,20 @@ on command line or configuration called 'default' if none are specified
 eos
 end
 
-def classify(imap_classifier, move_messages, filter, verbose)
+def classify(imap_classifier, move_messages, verbose)
 
-	imap_classifier.classify_folder('INBOX', filter, move_messages)
+	imap_classifier.classify_folder('INBOX', move_messages)
 
 	# handle all learning forced by user (manual learn) - dragging around folders
-	imap_classifier.manual_learn_all(move_messages, filter)
+	imap_classifier.manual_learn_all(move_messages)
 end
 
-def fetch_headers(imap_classifier, filter, verbose)
+def fetch_headers(imap_classifier, verbose)
 	imap_classifier.folders.each do |folder|
-		puts "Processing folder #{folder} using filter #{filter}" if verbose
-		imap_classifier.learning_done(false)
-		imap_classifier.learn_from_folder(folder, filter)
-		imap_classifier.learning_done(true)
+		puts "Processing folder #{folder} using filter #{imap_classifier.filter}" if verbose
+		imap_classifier.learn_from_folder(folder)
 	end
+	imap_classifier.relax_filter
 end
 
 run_each = 100 # In daemon mode, process all accounts every run_each seconds
@@ -108,10 +107,8 @@ end
 run = 0
 first_run = true
 
-filter="ALL"
-
 unless process_all
-	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.today.weeks_ago(1))}"
+	classifiers.each { |imap_classifier| imap_classifier.set_filter("OR RECENT SINCE #{Net::IMAP.format_date(Date.today.weeks_ago(1))}") }
 end
 
 while daemon or first_run
@@ -120,13 +117,13 @@ while daemon or first_run
       imap_classifier.connect unless imap_classifier.connected?
 			if do_fetchheaders and (run.modulo(fetch_every) == 0)
 				puts "Fetching headers for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
-				fetch_headers(imap_classifier, filter , verbose)
+				fetch_headers(imap_classifier, verbose)
 				run = 0
 			end	
 
 			if do_classify
 				puts "Doing classification for #{imap_classifier.imap_config['login']}@#{imap_classifier.imap_config['imapserver']}" if verbose
-				classify(imap_classifier, move_messages, filter, verbose)
+				classify(imap_classifier, move_messages, verbose)
 			end
 		
 		rescue Errno::EPIPE, Net::IMAP::ByeResponseError, EOFError, IOError, Errno::ETIMEDOUT, Net::IMAP::NoResponseError, Errno::ECONNREFUSED, Errno::ECONNRESET, Net::IMAP::ResponseParseError, Errno::EHOSTUNREACH => e
@@ -142,9 +139,6 @@ while daemon or first_run
 			end
 		end
 	end
-	relax_filter = true
-	classifiers.each { |imap_classifier| relax_filter = false unless imap_classifier.is_learning_done? }
-	filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}" if relax_filter
 	run += 1
 	first_run = false
 
