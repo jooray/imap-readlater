@@ -9,6 +9,7 @@ DEBUG=true
 def initialize(configuration)
 	@imap_config = configuration
   @connected = false
+	@filter = "ALL"
 end
 
 def connect
@@ -177,17 +178,17 @@ def message_classification(uid, envelope)
 
 end
 
-def learn_from_folder(folder, filter="ALL")
-	foreach_msg_in_folder(folder, filter) { |uid, envelope| learn_message(uid, envelope) }
+def learn_from_folder(folder)
+	foreach_msg_in_folder(folder, @filter) { |uid, envelope| learn_message(uid, envelope) }
 end
 
-def classify_folder(folder, filter="ALL", move_messages=false)
+def classify_folder(folder, move_messages=false)
 	if move_messages 
 		create_folder_if_nonexistant(@imap_config['laterfolder'])
 	  create_folder_if_nonexistant(@imap_config['snoozethreadfolder'])
 	end
 	errorless = true
-	foreach_msg_in_folder(folder, filter, (not move_messages)) do |uid, envelope|
+	foreach_msg_in_folder(folder, @filter, (not move_messages)) do |uid, envelope|
 		# unless someone moved this message from other folder back to inbox (=> learn)
 		# or unless we have already processed it, perform classification
 		unless message_check_manual_learn(uid, envelope, 'i')
@@ -253,8 +254,8 @@ def handle_manual_learn(uid, envelope, oldsymbol, newsymbol)
 
 end
 
-def train_from_folder(folder, symbol, filter="ALL")
-	foreach_msg_in_folder(folder, filter) do |uid, envelope|
+def train_from_folder(folder, symbol)
+	foreach_msg_in_folder(folder, @filter) do |uid, envelope|
 		oldsymbol=register_message(uid, envelope, symbol)
 		if oldsymbol != symbol
 			handle_manual_learn(uid, envelope, oldsymbol, symbol)
@@ -262,10 +263,10 @@ def train_from_folder(folder, symbol, filter="ALL")
 	end
 end
 
-def folder_check_manual_learn(folder, symbol, filter = 'ALL', delete_after_classification = false)
+def folder_check_manual_learn(folder, symbol, delete_after_classification = false)
 	@imap.select(folder)
 	@imap.expunge
-	foreach_msg_in_folder(folder, filter, (not delete_after_classification)) do |uid, envelope|
+	foreach_msg_in_folder(folder, @filter, (not delete_after_classification)) do |uid, envelope|
 		message_check_manual_learn(uid, envelope, symbol)
 		if delete_after_classification
 			 @imap.uid_store(uid, "+FLAGS", [:Deleted])
@@ -274,12 +275,12 @@ def folder_check_manual_learn(folder, symbol, filter = 'ALL', delete_after_class
 	@imap.expunge if delete_after_classification
 end
 
-def manual_learn_all(move_messages = true, filter = 'ALL')
+def manual_learn_all(move_messages = true)
 	create_folder_if_nonexistant(@imap_config['laterfolder'])
 	create_folder_if_nonexistant(@imap_config['blackholefolder'])
 	create_folder_if_nonexistant(@imap_config['snoozethreadfolder'])
-	folder_check_manual_learn(@imap_config['laterfolder'], 'l', filter, false)
-	folder_check_manual_learn(@imap_config['blackholefolder'], 'b', filter, move_messages)
+	folder_check_manual_learn(@imap_config['laterfolder'], 'l', false)
+	folder_check_manual_learn(@imap_config['blackholefolder'], 'b', move_messages)
 end
 
 
@@ -301,6 +302,19 @@ end
 def list_folders
   @imap.list("", "*")
 end
+
+def set_filter(filter)
+	@filter = filter
+end
+
+def relax_filter
+	@filter="OR RECENT SINCE #{Net::IMAP.format_date(Date.yesterday)}"
+end
+
+def filter
+	@filter
+end
+
 
 
 private
@@ -368,7 +382,6 @@ def foreach_msg_in_folder(folder, filter="ALL", read_only=true)
 	end
 
 end
-
 
 def dd(what)
 	puts "#{what}" if DEBUG
