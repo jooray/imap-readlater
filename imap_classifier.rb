@@ -60,8 +60,11 @@ end
 def learn_message(uid, envelope)
   if known_uid?(uid)
 	#dd "UID #{uid} already known"
-	return
+	  return
   end
+	if envelope.nil?
+		return
+	end
   c=Conversation.new
   unless envelope.from.nil? or envelope.from[0].nil?
 	  c.frommailbox = envelope.from[0].mailbox
