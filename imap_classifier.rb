@@ -370,8 +370,9 @@ def foreach_msg_in_folder(folder, filter="ALL", read_only=true)
 			msg = msgs[0]
 			envelope = msg.attr["ENVELOPE"]
 			uid = msg.attr["UID"]
-		 
-			yield uid, envelope
+			unless envelope.nil?
+				yield uid, envelope
+			end
 		  end
 		rescue Net::IMAP::NoResponseError => e
 		  dd "Error: "
